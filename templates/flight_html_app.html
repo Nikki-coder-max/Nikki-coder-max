@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flight Fare Prediction</title>
+    <script>
+        // JavaScript to ensure the Date of Journey is not before the current date
+        window.onload = function() {
+            const today = new Date();
+            const formattedDate = today.toISOString().split('T')[0];
+            document.getElementById("date_of_journey").setAttribute("min", formattedDate);
+
+            // Validation for Time and Date
+            document.getElementById("predictionForm").onsubmit = function(event) {
+                const dateInput = document.getElementById("date_of_journey").value;
+                const depTime = convertTo24HourFormat(
+                    document.getElementById("dep_time").value,
+                    document.querySelector('input[name="dep_ampm"]:checked').value
+                );
+                const arrTime = convertTo24HourFormat(
+                    document.getElementById("arrival_time").value,
+                    document.querySelector('input[name="arr_ampm"]:checked').value
+                );
+
+                if (dateInput < formattedDate) {
+                    alert("Invalid Date! Please select a date that is today or in the future.");
+                    event.preventDefault();
+                    return;
+                }
+
+                if (depTime >= arrTime) {
+                    alert("Arrival time must be after Departure time.");
+                    event.preventDefault();
+                }
+            };
+
+            function convertTo24HourFormat(time, ampm) {
+                const [hour, minute] = time.split(":").map(Number);
+                let adjustedHour = hour;
+                if (ampm === "PM" && hour !== 12) adjustedHour += 12;
+                if (ampm === "AM" && hour === 12) adjustedHour = 0;
+                return adjustedHour * 60 + minute; // Total minutes
+            }
+        };
+    </script>
+</head>
+<body>
+    <h1>Flight Fare Prediction</h1>
+    <form id="predictionForm" action="/predict" method="post">
+        <!-- Airline -->
+        <label for="airline">Airline:</label>
+        <select name="airline" id="airline" required>
+            <option value="IndiGo">IndiGo</option>
+            <option value="Air India">Air India</option>
+            <option value="Jet Airways">Jet Airways</option>
+            <option value="SpiceJet">SpiceJet</option>
+            <option value="Vistara">Vistara</option>
+        </select>
+        <br><br>
+
+        <!-- Source -->
+        <label for="source">Source:</label>
+        <select name="source" id="source" required>
+            <option value="Delhi">Delhi</option>
+            <option value="Mumbai">Mumbai</option>
+            <option value="Bangalore">Bangalore</option>
+            <option value="Kolkata">Kolkata</option>
+        </select>
+        <br><br>
+
+        <!-- Destination -->
+        <label for="destination">Destination:</label>
+        <select name="destination" id="destination" required>
+            <option value="Cochin">Cochin</option>
+            <option value="Delhi">Delhi</option>
+            <option value="Bangalore">Bangalore</option>
+            <option value="Mumbai">Mumbai</option>
+        </select>
+        <br><br>
+
+        <!-- Date of Journey -->
+        <label for="date_of_journey">Date of Journey:</label>
+        <input type="date" name="date_of_journey" id="date_of_journey" required>
+        <br><br>
+
+        <!-- Departure Time with AM/PM -->
+        <label for="dep_time">Departure Time:</label>
+        <input type="time" name="dep_time" id="dep_time" required>
+        <label>
+            <input type="radio" name="dep_ampm" value="AM" checked> AM
+        </label>
+        <label>
+            <input type="radio" name="dep_ampm" value="PM"> PM
+        </label>
+        <br><br>
+
+        <!-- Arrival Time with AM/PM -->
+        <label for="arrival_time">Arrival Time:</label>
+        <input type="time" name="arrival_time" id="arrival_time" required>
+        <label>
+            <input type="radio" name="arr_ampm" value="AM" checked> AM
+        </label>
+        <label>
+            <input type="radio" name="arr_ampm" value="PM"> PM
+        </label>
+        <br><br>
+
+        <!-- Duration -->
+        <label for="duration">Duration (in minutes):</label>
+        <input type="number" name="duration" id="duration" placeholder="Enter duration in minutes" required>
+        <br><br>
+
+        <!-- Total Stops -->
+        <label for="total_stops">Total Stops:</label>
+        <input type="number" name="total_stops" id="total_stops" min="0" max="5" required>
+        <br><br>
+
+        <!-- Additional Info -->
+        <label for="additional_info">Additional Info:</label>
+        <select name="additional_info" id="additional_info">
+            <option value="No info">No info</option>
+            <option value="In-flight meal not included">In-flight meal not included</option>
+        </select>
+        <br><br>
+
+        <button type="submit">Predict</button>
+    </form>
+
+    {% if prediction %}
+        <h2>Prediction Result:</h2>
+        <p>{{ prediction }}</p>
+    {% endif %}
+</body>
+</html>
